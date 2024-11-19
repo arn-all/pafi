@@ -3,15 +3,16 @@
   <DumpFolder>./dumps</DumpFolder>
 
   <!-- LowTemperature to HighTemperature in TemperatureSteps steps -->
-  <LowTemperature> 200 </LowTemperature>
+  <LowTemperature> 800 </LowTemperature>
   <HighTemperature> 800 </HighTemperature>
-  <TemperatureSteps> 4 </TemperatureSteps>
+  <TemperatureSteps> 1 </TemperatureSteps>
 
   <!-- We require nprocs % CoresPerWorker==0 -->
   <CoresPerWorker> 1 </CoresPerWorker>
 
   <!-- Number of samples per plane per worker -->
   <nRepeats> 1 </nRepeats>
+  <ForceErrorThresh> 0.1 </ForceErrorThresh>
 
   <!-- Data gathering steps -->
   <SampleSteps> 100 </SampleSteps>
@@ -21,6 +22,11 @@
 
   <!-- Max steps for optional in-plane minimizations (see below) -->
   <MinSteps> 100 </MinSteps>
+
+  <!-- Custom knot positions for integration TEST FEATURE-->
+  <UseCustomPositions>0</UseCustomPositions>
+  <CustomPositions>0. 0.16 0.223 0.3 0.4 0.5</CustomPositions>
+  
 
   <!--
     RELATIVE thermal expansion coefficients along X,Y,Z directions of simulation-
@@ -47,18 +53,18 @@
   <Friction> 0.005 </Friction>
 
   <!-- 0/1 Output LAMMPS logfiles for error checking purposes -->
-  <LogLammps> 1 </LogLammps>
+  <LogLammps> 0 </LogLammps>
 
   <!--
    0 : (Default) Output time-and-ensemble averaged in-plane deviation from reference pathway. Can indicate finite temperature path but will have sampling noise
    1 : Output ensemble averaged in-plane deviation following in-plane minimization post-run. No noise but will lose some/all features of path
   -->
-  <postMin> 0 </postMin>
+  <postMin> 1 </postMin>
 
 	<!--
 		Dump "hot" snapshot after each run. For development only!
 	-->
-  <workerDump> 1 </workerDump>
+  <workerDump> 0 </workerDump>
 
   <!--
   Perform an in-plane minimization before thermalization/sampling.
@@ -74,12 +80,9 @@
   -->
   <!--<FixPAFIGroup>pafi_fix_group</FixPAFIGroup>-->
 
-  <!-- If == 0 ignore NPlanes, Start Coordinate and StopCoordinate;
-  sample only at provided pathway configurations. Test feature -->
-  <Rediscretize>1</Rediscretize>
-
   <!-- If Rediscretize==1, sample on nPlanes equally spaced
   planes in [StartCoordinate,StopCoordinate], a subset of [0,1] -->
+  <Rediscretize>1</Rediscretize>
   <nPlanes> 11 </nPlanes>
   <StartCoordinate> 0.0 </StartCoordinate>
   <StopCoordinate> 1.0 </StopCoordinate>
@@ -100,7 +103,7 @@
   <ReSampleThresh> 0.8 </ReSampleThresh>
 
   <!-- How many resample attempts -->
-  <maxExtraRepeats> 1 </maxExtraRepeats>
+  <maxExtraRepeats> 10 </maxExtraRepeats>
 
   <!--
   Sequential list of pathway configurations,
