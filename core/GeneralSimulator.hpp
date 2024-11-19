@@ -56,7 +56,7 @@ public:
 
   void write_dev(std::string fn, double r, double *dev, double *dev_sq);
 
-  void make_path(std::vector<std::string> knot_list, bool real_coord);
+  void make_path(std::vector<std::string> knot_list, int real_coord);
 
   double path(int i, double r, int d, double s);
 
@@ -72,7 +72,7 @@ public:
   std::vector<spline> pathway;
   std::vector<double> pathway_r;
   std::string pafi_package;
-  bool s_flag,has_pafi,spline_path;
+  bool s_flag,has_pafi,cubic_spline;
 private:
   /* nothing */
 };

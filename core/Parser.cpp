@@ -47,10 +47,11 @@ Parser::Parser(std::string file, bool test) {
   parameters["postMin"] = "0";
 	parameters["workerDump"] = "0";
   parameters["PreMin"] = "1";
-  parameters["SplinePath"] = "1";
+  parameters["Rediscretize"] = "1";
   parameters["MatchPlanes"] = "0";
   parameters["RealMEPDist"] = "1";
   parameters["FixPAFIGroup"] = "all";
+  parameters["CubicSpline"] = "1";
 
 
   seeded = false;
@@ -65,7 +66,7 @@ Parser::Parser(std::string file, bool test) {
 	root_node = xml_doc.first_node();
 
   bool found_pafi = false, found_scripts = false;
-
+  
   while (root_node) {
 
     if(rtws(root_node->name())=="PAFI") {
@@ -122,14 +123,21 @@ void Parser::set_parameters() {
   loglammps = bool(std::stoi(parameters["LogLammps"]));
   maxjump_thresh = std::stod(parameters["MaxJump"]);
   redo_thresh = std::stod(parameters["ReSampleThresh"]);
+  f_error_thresh = std::stod(parameters["ForceErrorThresh"]);
   maxExtraRepeats = std::stoi(parameters["maxExtraRepeats"]);
   postMin = bool(std::stoi(parameters["postMin"]));
 	workerDump = bool(std::stoi(parameters["workerDump"]));
   preMin = bool(std::stoi(parameters["PreMin"]));
-  spline_path = bool(std::stoi(parameters["SplinePath"]));
-  match_planes = !bool(std::stoi(parameters["Rediscretize"]));
-  real_coord = bool(std::stoi(parameters["RealMEPDist"]));
-
+  rediscretize = bool(std::stoi(parameters["Rediscretize"]));
+  use_custom_positions = bool(std::stoi(parameters["UseCustomPositions"]));
+  real_coord = int(std::stoi(parameters["RealMEPDist"]));
+  cubic_spline = bool(std::stoi(parameters["CubicSpline"]));
+  
+  std::stringstream ss(parameters["CustomPositions"]);
+  std::istream_iterator<std::string> begin(ss);
+  std::istream_iterator<std::string> end;
+  std::vector<std::string> tokens(begin, end);
+  for (auto &s: tokens) custom_positions.push_back(std::stod(s));
 };
 
 void Parser::overwrite_xml(int nProcs) {
@@ -152,7 +160,14 @@ void Parser::overwrite_xml(int nProcs) {
   parameters["MaxJump"] = "0.1";
   parameters["ReSampleThresh"] = "0.5";
   parameters["maxExtraRepeats"] = "1";
-
+  parameters["ForceErrorThresh"] = "1.0";
+  parameters["UseCustomPositions"] = "0.0";
+  parameters["CustomPositions"] = "0.0 1.0";
+  std::stringstream ss(parameters["CustomPositions"]);
+  std::istream_iterator<std::string> begin(ss);
+  std::istream_iterator<std::string> end;
+  std::vector<std::string> tokens(begin, end);
+  for (auto &s: tokens) custom_positions.push_back(std::stod(s));
   //parameters["postMin"] = "1";
   //parameters["PreMin"] = "1";
 };
@@ -230,3 +245,29 @@ std::string Parser::welcome_message(){
 
   return str;
 };
+
+std::vector<double> Parser::sample_r(std::vector<double> pathway_r) {
+  // determine knot positions 
+  // pathway_r : from NEB
+  // All in convention set by RealMEPDist
+  std::vector<double> r_vec;
+  // Hierarchy: use_custom_positions, rediscretize
+  if(use_custom_positions) {
+    // overwrite everything with custom positions
+    for(auto r: custom_positions) {
+      r_vec.push_back(r);
+    }
+  } else if(rediscretize && nPlanes>1) {
+    // Regular interpolation
+    double dr = (stopr-startr)/(double)(nPlanes-1);
+    for (double r = startr; r <= stopr+0.5*dr; r += dr )
+      r_vec.push_back(r);
+  } else {
+    // Original interpolation
+    for(auto r: pathway_r) {
+      if(r>=startr-0.02 && r<=stopr+0.02) r_vec.push_back(r);
+    }
+  }
+  return r_vec;
+};
+  
